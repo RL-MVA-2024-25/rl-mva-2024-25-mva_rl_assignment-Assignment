@@ -109,7 +109,8 @@ class ProjectAgent:
     def load(self):
         device = torch.device('cpu')
         self.model = DQN(state_dim, config['nb_neurons'], self.nb_actions).to(device)
-        self.model.load_state_dict(torch.load("../model_C15.pt", map_location=device))
+        path = os.getcwd() + "/model_C15.pt"
+        self.model.load_state_dict(torch.load(path, map_location=device))
         self.model.eval()
 
     def greedy_action(self, network, state):
