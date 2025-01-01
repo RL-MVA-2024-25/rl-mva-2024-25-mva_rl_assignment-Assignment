@@ -5,6 +5,7 @@ import torch
 from copy import deepcopy
 import random
 import numpy as np
+import os
 
 env_df = TimeLimit(
     env=HIVPatient(domain_randomization=False), max_episode_steps=200
