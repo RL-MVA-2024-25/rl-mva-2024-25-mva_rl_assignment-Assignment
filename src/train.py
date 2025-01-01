@@ -31,7 +31,7 @@ config = {'nb_actions': env.action_space.n,
           'epsilon_delay_decay': 700,
           'batch_size': 256,
           'gradient_steps': 5,
-          # 'criterion': torch.nn.MSELoss(), # or torch.nn.HuberLoss()
+          # 'criterion': torch.nn.MSELoss(), 
           'criterion': torch.nn.HuberLoss(),
           'update_target': 700,
           'nb_neurons': 256}
