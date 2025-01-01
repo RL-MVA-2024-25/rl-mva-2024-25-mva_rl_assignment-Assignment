@@ -1,5 +1,5 @@
 from gymnasium.wrappers import TimeLimit
-# from env_hiv import HIVPatient
+from env_hiv import HIVPatient
 import torch.nn as nn
 import torch
 from copy import deepcopy
