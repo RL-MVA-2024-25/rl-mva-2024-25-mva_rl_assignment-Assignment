@@ -33,7 +33,7 @@ class ProjectAgent:
         self.n_actions = 4
         self.state_dim = 6
         self.gamma = 0.85 
-        self.device = "cuda" if next(model.parameters()).is_cuda else "cpu"
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.save_path = "agent.pt"
 
         self.replay_buffer = ReplayBuffer(capacity=60000,device = self.device)
