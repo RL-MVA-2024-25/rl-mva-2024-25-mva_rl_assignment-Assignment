@@ -190,7 +190,7 @@ class ProjectAgent:
         print(f"Model saved in {path}")
 
     def load(self):
-        self.model.load_state_dict(torch.load(self.save_path, map_location="cpu"))
+        self.model.load_state_dict(torch.load('./agent.pt', map_location=self.device))
         self.target_network = deepcopy(self.model).to(self.device)
         self.model.eval()
 
