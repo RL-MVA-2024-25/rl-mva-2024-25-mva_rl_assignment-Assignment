@@ -1,15 +1,18 @@
 from gymnasium.wrappers import TimeLimit
 from env_hiv import HIVPatient
 import numpy as np
-import matplolib.pyplot as plt
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 from replay_buffer import ReplayBuffer
 import torch.optim.lr_scheduler as lr_scheduler
-from DQN import QNetwork
+from DQN import DQN
 from copy import deepcopy
+import random
+import os
+from pathlib import Path
 
 env = TimeLimit(
     env=HIVPatient(domain_randomization=False), max_episode_steps=200
@@ -27,7 +30,7 @@ def greedy_action(network, state):
         return torch.argmax(Q).item()
 
 class ProjectAgent:
-    def __init__(self, env,model):
+    def __init__(self):
         self.n_actions = 4
         self.state_dim = 6
         self.gamma = 0.85 
@@ -35,7 +38,7 @@ class ProjectAgent:
         self.save_path = "agent.pt"
 
         self.replay_buffer = ReplayBuffer(capacity=60000,device = self.device)
-        self.model = model
+        self.model = DQN(self.state_dim, self.n_actions).to(self.device)
         self.lr = 1e-3 
         self.batch_size = 1024
 
@@ -50,7 +53,7 @@ class ProjectAgent:
         self.target_update_freq = 100
         self.update_target_tau = 0.005
         self.update_target_strategy = 'ema'
-        self.nb_gradient_steps = 2
+        self.nb_gradient_steps = 1
  
         #self.q_network = QNetwork(self.state_dim, self.n_actions).to(self.device)
         self.target_network = DQN(self.state_dim, self.n_actions).to(self.device)
@@ -58,8 +61,8 @@ class ProjectAgent:
         self.target_network.load_state_dict(self.model.state_dict())
         self.target_network.eval()
         
-        self.monitoring_nb_trials = 50
-        self.monitor_every =  50
+        self.monitoring_nb_trials = 40
+        self.monitor_every =  40
 
         self.criterion = nn.MSELoss()
         self.optimizer = optim.Adam(self.model.parameters(),lr=self.lr)                     
@@ -182,6 +185,28 @@ class ProjectAgent:
             else:
                 state = next_state
         return episode_return, MC_avg_discounted_reward, MC_avg_total_reward, V_init_state
+
+    def save(self, path):
+        torch.save(self.model.state_dict(), path)
+        print(f"Model saved in {path}")
+
+    def load(self):
+        self.model.load_state_dict(torch.load(self.save_path, map_location=self.device))
+        self.target_network = deepcopy(self.model).to(self.device)
+        self.model.eval()
+
+
+    def collect_sample(self,nb_sample):
+        s, _ = env.reset()
+        for _ in range(nb_sample):
+            a = self.act(s)
+            s2, r, done, trunc, _ = env.step(a)
+            self.replay_buffer.append(s, a, r, s2, done)
+            if done or trunc :
+                s, _ = env.reset()
+            else:
+                s = s2
+        print('end of collection')
 
     def save(self, path):
         torch.save(self.model.state_dict(), path)
