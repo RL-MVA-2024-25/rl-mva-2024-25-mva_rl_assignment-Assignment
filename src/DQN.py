@@ -5,12 +5,12 @@ import torch.nn.functional as F
 
 class DQN(nn.Module):
     
-    def __init__(self, input_size=6, output_size=4): # 6 states and 4 actions
+    def __init__(self, input_size=6, output_size=4,hidden_dim = 64): # 6 states and 4 actions
         super(DQN, self).__init__()
         self.fc1 = nn.Linear(input_size, 32)
-        self.fc2 = nn.Linear(32, 64)
-        self.fc3 = nn.Linear(64,64)
-        self.fc4 = nn.Linear(64, 32)
+        self.fc2 = nn.Linear(32, hidden_dim)
+        self.fc3 = nn.Linear(hidden_dim,hidden_dim)
+        self.fc4 = nn.Linear(hidden_dim, 32)
         self.fc5 = nn.Linear(32, output_size)
     def forward(self, x):
         x = F.relu(self.fc1(x))
