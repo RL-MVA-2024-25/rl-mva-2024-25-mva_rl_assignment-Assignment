@@ -34,10 +34,10 @@ class ProjectAgent:
         self.state_dim = 6
         self.gamma = 0.85 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.save_path = "agent.pt"
+        self.save_path = "best_model.pth"
 
         self.replay_buffer = ReplayBuffer(capacity=60000,device = self.device)
-        self.model = DQN(self.state_dim, self.n_actions).to(self.device)
+        self.model = DQN(self.state_dim, self.n_actions,512).to(self.device)
         self.lr = 1e-3 
         self.batch_size = 1024
 
@@ -55,7 +55,7 @@ class ProjectAgent:
         self.nb_gradient_steps = 1
  
         #self.q_network = QNetwork(self.state_dim, self.n_actions).to(self.device)
-        self.target_network = DQN(self.state_dim, self.n_actions).to(self.device)
+        self.target_network = DQN(self.state_dim, self.n_actions,512).to(self.device)
            
         self.target_network.load_state_dict(self.model.state_dict())
         self.target_network.eval()
@@ -118,6 +118,7 @@ class ProjectAgent:
         MC_avg_total_reward = []   # NEW NEW NEW
         MC_avg_discounted_reward = []   # NEW NEW NEW
         V_init_state = []   # NEW NEW NEW
+        max_score = 0
         episode = 0
         episode_cum_reward = 0
         state, _ = env.reset()
@@ -170,6 +171,10 @@ class ProjectAgent:
                           ", MC disc ", '{:6.2f}'.format(MC_dr),
                           ", V0 ", '{:6.2f}'.format(V0),
                           sep='')
+                    if MC_tr > max_score:
+                        max_score = MC_tr
+                        torch.save(self.model.state_dict(), "best_model.pth")
+                        print("Best model find and saved")
                 else:
                     episode_return.append(episode_cum_reward)
                     print("Episode ", '{:2d}'.format(episode), 
@@ -190,7 +195,7 @@ class ProjectAgent:
         print(f"Model saved in {path}")
 
     def load(self):
-        self.model.load_state_dict(torch.load('./agent.pt', map_location=self.device))
+        self.model.load_state_dict(torch.load(self.save_path, map_location=self.device))
         self.target_network = deepcopy(self.model).to(self.device)
         self.model.eval()
 
@@ -228,6 +233,4 @@ class ProjectAgent:
             else:
                 s = s2
         print('end of collection')
-
-
 
