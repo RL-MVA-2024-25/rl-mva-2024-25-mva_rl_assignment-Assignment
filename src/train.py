@@ -62,9 +62,9 @@ class DQN(nn.Module):
             nn.ReLU(),
             nn.Linear(nb_neurons, nb_neurons),
             nn.ReLU(),
-            nn.Linear(nb_neurons, nb_neurons),
+            nn.Linear(nb_neurons, nb_neurons*2),
             nn.ReLU(),
-            nn.Linear(nb_neurons, nb_neurons),
+            nn.Linear(nb_neurons*2, nb_neurons),
             nn.ReLU(),
             nn.Linear(nb_neurons, nb_neurons),
             nn.ReLU(),
@@ -110,7 +110,7 @@ class ProjectAgent:
     def load(self):
         device = torch.device('cpu')
         self.model = DQN(state_dim, config['nb_neurons'], self.nb_actions).to(device)
-        path = os.getcwd() + "/model_C16.pt"
+        path = os.getcwd() + "/model_C15.pt"
         self.model.load_state_dict(torch.load(path, map_location=device))
         self.model.eval()
 
