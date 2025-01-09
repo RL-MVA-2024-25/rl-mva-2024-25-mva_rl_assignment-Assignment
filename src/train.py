@@ -34,7 +34,7 @@ class ProjectAgent:
         self.state_dim = 6
         self.gamma = 0.85 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.save_path = "best_model.pth"
+        self.save_path = str(Path(__file__).parent / "best_model.pth")
 
         self.replay_buffer = ReplayBuffer(capacity=60000,device = self.device)
         self.model = DQN(self.state_dim, self.n_actions,512).to(self.device)
