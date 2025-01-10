@@ -38,7 +38,7 @@ class ProjectAgent:
         self.n_actions = n_actions
         self.state_dim = state_dim
         self.gamma = 0.85 
-        self.save_path = str(Path(__file__).parent / "best_agent.pth")
+        self.save_path = str(Path(__file__).parent / "best_reward_agent_1.pth")
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         self.replay_buffer = ReplayBuffer_1(capacity=60000,device = self.device)
@@ -128,7 +128,7 @@ class ProjectAgent:
                 next_state, reward, done, truncated, _info = env.step(action)
 
                 agent.replay_buffer.append(state, action, reward, next_state, done)
-                agent.train_step()
+                agent.gradient_step()
 
                 state = next_state
                 epoch_r += reward
