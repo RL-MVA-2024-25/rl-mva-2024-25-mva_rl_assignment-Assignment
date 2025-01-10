@@ -30,7 +30,7 @@ class ProjectAgent:
             "gamma": 0.98,
             "buffer_size": 100000,
             "epsilon_min": 0.02,
-            "epsilon_max": 0.8,
+            "epsilon_max": 1.0,
             "epsilon_decay_period": 20000,
             "epsilon_delay_decay": 100,
             "batch_size": 200,
@@ -82,17 +82,17 @@ class ProjectAgent:
 
         DQN_model = torch.nn.Sequential(
             nn.Linear(state_dim, nb_neurons),
-            nn.GELU(),
+            nn.ReLU(),
             nn.Linear(nb_neurons, nb_neurons),
-            nn.GELU(),
+            nn.ReLU(),
             nn.Linear(nb_neurons, nb_neurons),
-            nn.GELU(),
+            nn.ReLU(),
             nn.Linear(nb_neurons, nb_neurons),
-            nn.GELU(),
+            nn.ReLU(),
             nn.Linear(nb_neurons, nb_neurons),
-            nn.GELU(),
+            nn.ReLU(),
             nn.Linear(nb_neurons, nb_neurons),
-            nn.GELU(),
+            nn.ReLU(),
             nn.Linear(nb_neurons, n_action),
         )
 
