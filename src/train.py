@@ -24,6 +24,8 @@ env = TimeLimit(
 class ProjectAgent:
     def __init__(self):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model = self.DQN().to(self.device)
+        self.target_model = deepcopy(self.model).to(self.device)
         self.config = self.config = {
             "nb_actions": env.action_space.n,
             "learning_rate": 0.001,
@@ -95,8 +97,6 @@ class ProjectAgent:
             if "update_target_tau" in self.config.keys()
             else 0.005
         )
-        self.model = self.DQN().to(self.device)
-        self.target_model = deepcopy(self.model).to(self.device)
 
     def act(self, observation, use_random=False):
         with torch.no_grad():
