@@ -3,6 +3,7 @@ import numpy as np
 import torch
 
 
+# introduce the mechanism of experiment replay by storing the past samples
 class ReplayBuffer:
     def __init__(self, capacity):
         self.capacity = capacity  # capacity of the buffer

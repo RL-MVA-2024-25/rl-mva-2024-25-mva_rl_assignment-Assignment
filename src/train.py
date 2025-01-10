@@ -40,7 +40,61 @@ class ProjectAgent:
             "update_target_tau": 0.005,
             "criterion": torch.nn.SmoothL1Loss(),
         }
+        self.gamma = self.config["gamma"]
+        self.batch_size = self.config["batch_size"]
+        self.nb_actions = self.config["nb_actions"]
+        # epsilon greedy strategy
+        self.epsilon_max = self.config["epsilon_max"]
+        self.epsilon_min = self.config["epsilon_min"]
+        self.epsilon_stop = (
+            self.config["epsilon_decay_period"]
+            if "epsilon_decay_period" in self.config.keys()
+            else 1000
+        )
+        self.epsilon_delay = (
+            self.config["epsilon_delay_decay"]
+            if "epsilon_delay_decay" in self.config.keys()
+            else 20
+        )
+        self.epsilon_step = (self.epsilon_max - self.epsilon_min) / self.epsilon_stop
+        # memory buffer
+        self.memory = ReplayBuffer(self.config["buffer_size"], self.device)
 
+        self.criterion = (
+            self.config["criterion"]
+            if "criterion" in self.config.keys()
+            else torch.nn.MSELoss()
+        )
+        self.lr = (
+            self.config["learning_rate"]
+            if "learning_rate" in self.config.keys()
+            else 0.001
+        )
+        self.optimizer = (
+            self.config["optimizer"]
+            if "optimizer" in self.config.keys()
+            else torch.optim.Adam(self.model.parameters(), lr=self.lr)
+        )
+        self.nb_gradient_steps = (
+            self.config["gradient_steps"]
+            if "gradient_steps" in self.config.keys()
+            else 1
+        )
+        self.update_target_strategy = (
+            self.config["update_target_strategy"]
+            if "update_target_strategy" in self.config.keys()
+            else "replace"
+        )
+        self.update_target_freq = (
+            self.config["update_target_freq"]
+            if "update_target_freq" in self.config.keys()
+            else 20
+        )
+        self.update_target_tau = (
+            self.config["update_target_tau"]
+            if "update_target_tau" in self.config.keys()
+            else 0.005
+        )
         self.model = self.DQN().to(self.device)
         self.target_model = deepcopy(self.model).to(self.device)
 
@@ -93,6 +147,8 @@ class ProjectAgent:
             nn.ReLU(),
             nn.Linear(nb_neurons, nb_neurons),
             nn.ReLU(),
+            nn.Linear(nb_neurons, nb_neurons),
+            nn.ReLU(),
             nn.Linear(nb_neurons, n_action),
         )
 
@@ -101,81 +157,15 @@ class ProjectAgent:
     def train(self):
         print("Using device:", self.device)
 
-        self.gamma = self.config["gamma"]
-        self.batch_size = self.config["batch_size"]
-        self.nb_actions = self.config["nb_actions"]
-
-        # epsilon greedy strategy
-        epsilon_max = self.config["epsilon_max"]
-        epsilon_min = self.config["epsilon_min"]
-        epsilon_stop = (
-            self.config["epsilon_decay_period"]
-            if "epsilon_decay_period" in self.config.keys()
-            else 1000
-        )
-        epsilon_delay = (
-            self.config["epsilon_delay_decay"]
-            if "epsilon_delay_decay" in self.config.keys()
-            else 20
-        )
-        epsilon_step = (epsilon_max - epsilon_min) / epsilon_stop
-
-        # memory buffer
-        self.memory = ReplayBuffer(self.config["buffer_size"], self.device)
-
-        self.criterion = (
-            self.config["criterion"]
-            if "criterion" in self.config.keys()
-            else torch.nn.MSELoss()
-        )
-        lr = (
-            self.config["learning_rate"]
-            if "learning_rate" in self.config.keys()
-            else 0.001
-        )
-
-        self.optimizer = (
-            self.config["optimizer"]
-            if "optimizer" in self.config.keys()
-            else torch.optim.Adam(self.model.parameters(), lr=lr)
-        )
-        self.optimizer2 = (
-            self.config["optimizer"]
-            if "optimizer" in self.config.keys()
-            else torch.optim.Adam(self.model.parameters(), lr=lr)
-        )
-
-        nb_gradient_steps = (
-            self.config["gradient_steps"]
-            if "gradient_steps" in self.config.keys()
-            else 1
-        )
-
-        # target network
-        update_target_strategy = (
-            self.config["update_target_strategy"]
-            if "update_target_strategy" in self.config.keys()
-            else "replace"
-        )
-        update_target_freq = (
-            self.config["update_target_freq"]
-            if "update_target_freq" in self.config.keys()
-            else 20
-        )
-        update_target_tau = (
-            self.config["update_target_tau"]
-            if "update_target_tau" in self.config.keys()
-            else 0.005
-        )
-
-        best_val_reward = 0
+        # after 200 episode, all experiments suffer from a decline in reward
         max_episode = 250
         episode_return = []
         episode = 0
+        step = 0
         episode_cum_reward = 0
+        best_val_reward = 0
         state, _ = env.reset()
         epsilon = epsilon_max
-        step = 0
 
         while episode < max_episode:
             # update epsilon
@@ -190,16 +180,16 @@ class ProjectAgent:
             self.memory.append(state, action, reward, next_state, done)
             episode_cum_reward += reward
 
-            for _ in range(nb_gradient_steps):
+            for _ in range(self.nb_gradient_steps):
                 self.gradient_step()
 
-            if update_target_strategy == "replace":
-                if step % update_target_freq == 0:
+            if self.update_target_strategy == "replace":
+                if step % self.update_target_freq == 0:
                     self.target_model.load_state_dict(self.model.state_dict())
-            if update_target_strategy == "ema":
+            if self.update_target_strategy == "ema":
                 target_state_dict = self.target_model.state_dict()
                 model_state_dict = self.model.state_dict()
-                tau = update_target_tau
+                tau = self.update_target_tau
                 for key in model_state_dict:
                     target_state_dict[key] = (
                         tau * model_state_dict[key] + (1 - tau) * target_state_dict[key]
@@ -210,7 +200,10 @@ class ProjectAgent:
             if done or trunc:
                 episode += 1
 
+                # evaluate on the evaluate_HIV
                 eposide_val_reward = evaluate_HIV(agent=self, nb_episode=1)
+
+                # need to evaluate on the evaluate_HIV_population
 
                 print(
                     f"Episode {episode:3d} | "
@@ -221,6 +214,7 @@ class ProjectAgent:
                 )
                 state, _ = env.reset()
 
+                # save the best model
                 if eposide_val_reward > best_val_reward:
                     best_val_reward = eposide_val_reward
                     self.best_model = deepcopy(self.model).to(self.device)
