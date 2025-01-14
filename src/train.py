@@ -36,13 +36,14 @@ class VanillaAgent:
 
 class ForestAgent:
     
-    def __init__(self, config, env):
+    def __init__(self, config=None, env=None):
         self.config = config
         self.env = env
         self.indiv_env = TimeLimit(HIVPatient(domain_randomization=False), max_episode_steps=200)
-        self.random_env = TimeLimit(HIVPatient(domain_randomization=True), max_episode_steps=200)
-        self.config_str = ''.join(f'_{value}' for key, value in config.items())
-        self.model = self.train(self.config["num_samples"], self.config["max_episode"], self.config["gamma"], disable_tqdm=False)
+        # self.random_env = TimeLimit(HIVPatient(domain_randomization=True), max_episode_steps=200)
+        if config != None:
+            self.config_str = ''.join(f'_{value}' for key, value in config.items())
+        
     def collect_samples(self, horizon, disable_tqdm=False, print_done_states=False):
         s, _ = self.env.reset()
         #dataset = []
@@ -111,25 +112,26 @@ class ForestAgent:
         return self.Qfunctions[-1]
 
 
-    def act(self, observation, use_random=False):
-        if use_random:
-            return self.env.action_space.sample()
-        else:
-            Q = np.zeros(self.env.action_space.n)
-            for a in range(self.env.action_space.n):
-                obs =  np.expand_dims(observation, axis=0)
-                act =  np.array([[a]])
-                SA = np.append(obs,act,axis=1)
-                Q[a] = self.model.predict(SA)
-            return np.argmax(Q)
+    def act(self, observation):
+        Q = np.zeros(self.indiv_env.action_space.n)
+        for a in range(self.indiv_env.action_space.n):
+            obs =  np.expand_dims(observation, axis=0)
+            act =  np.array([[a]])
+            SA = np.append(obs,act,axis=1)
+            Q[a] = self.model.predict(SA)
+        return np.argmax(Q)
 
     def save(self, path):
         pass
 
     def load(self):
-        self.model.load_model(f"./models/Q{self.config_str}.json")
-        pass
+        self.model = XGBRegressor()
+        self.model.load_model("./models/Q_100_5.json")
 
+model = ForestAgent({"n_estim":400, "max_depth":14}, TimeLimit(HIVPatient(domain_randomization=True), max_episode_steps=200))
+model.train(100000, 500, 0.96, disable_tqdm=False)
+
+"""
 class ReplayBuffer:
     def __init__(self, capacity, device):
         self.capacity = int(capacity) # capacity of the buffer
@@ -147,7 +149,6 @@ class ReplayBuffer:
     def __len__(self):
         return len(self.data)
     
-
 class DQNAgent:
     
     def __init__(self, config):
@@ -280,3 +281,5 @@ class DQNAgent:
 
     def load(self):
         pass
+    
+"""
