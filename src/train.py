@@ -165,12 +165,12 @@ class ProjectAgent:
         episode_cum_reward = 0
         best_val_reward = 0
         state, _ = env.reset()
-        epsilon = epsilon_max
+        epsilon = self.epsilon_max
 
         while episode < max_episode:
             # update epsilon
-            if step > epsilon_delay:
-                epsilon = max(epsilon_min, epsilon - epsilon_step)
+            if step > self.epsilon_delay:
+                epsilon = max(self.epsilon_min, epsilon - self.epsilon_step)
             if np.random.rand() < epsilon:
                 action = env.action_space.sample()
             else:
@@ -212,6 +212,8 @@ class ProjectAgent:
                     f"Episode Cummulative Reward {episode_cum_reward:.4e} | "
                     f"Evaluation Reward {eposide_val_reward:.4e}"
                 )
+
+                # reset the env
                 state, _ = env.reset()
 
                 # save the best model
@@ -222,6 +224,7 @@ class ProjectAgent:
                     self.save(path)
                 episode_return.append(episode_cum_reward)
 
+                # reset the episode cummulative reward
                 episode_cum_reward = 0
             else:
                 state = next_state
