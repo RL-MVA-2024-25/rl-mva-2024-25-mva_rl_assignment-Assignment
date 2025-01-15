@@ -1,5 +1,6 @@
 from gymnasium.wrappers import TimeLimit
-from env_hiv_ import FastHIVPatient as HIVPatient
+from gymnasium.wrappers import TimeLimit
+from env_hiv import HIVPatient
 from functools import partial
 from evaluate import evaluate_HIV, evaluate_HIV_population
 import numpy as np
@@ -12,11 +13,12 @@ from copy import deepcopy
 import os
 import pickle
 import zstandard as zstd
+import os
 
-# env = TimeLimit(
-#     env=HIVPatient(domain_randomization=True), max_episode_steps=200
-# )  # The time wrapper limits the number of steps in an episode at 200.
-# # Now is the floor is yours to implement the agent and train it.
+env = TimeLimit(
+    env=HIVPatient(domain_randomization=True), max_episode_steps=200
+)  # The time wrapper limits the number of steps in an episode at 200.
+# Now is the floor is yours to implement the agent and train it.
 
 
 # You have to implement your own agent.
@@ -131,6 +133,7 @@ class ProjectAgent:
     def load(self, path="./models/Q.pkl"):
         path = f"./models/Q_submit.pkl.zst"
         temp = f"./models/Q_submit_temp.pkl"
+        print(os.getcwd())
         try:
             #I decrompress the file
             with open(path, "rb") as f_in, open(temp, "wb") as f_out:
