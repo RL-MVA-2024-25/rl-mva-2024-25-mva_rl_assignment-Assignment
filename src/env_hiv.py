@@ -2,7 +2,7 @@ import gymnasium as gym
 import numpy as np
 
 
-class SlowHIVPatient(gym.Env):
+class HIVPatient(gym.Env):
     """HIV patient simulator
 
     Implements the simulator defined in 'Dynamic Multidrug Therapies for HIV: Optimal and STI Control Approaches' by Adams et al. (2004).
@@ -13,7 +13,7 @@ class SlowHIVPatient(gym.Env):
     def __init__(
         self, clipping=True, logscale=False, domain_randomization: bool = False
     ):
-        super(SlowHIVPatient, self).__init__()
+        super(HIVPatient, self).__init__()
 
         self.domain_randomization = domain_randomization
         self.action_space = gym.spaces.Discrete(4)
