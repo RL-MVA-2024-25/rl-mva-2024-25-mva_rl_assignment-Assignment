@@ -130,7 +130,7 @@ class ProjectAgent:
 
     def load(self, path="./models/Q.pkl"):
         print(os.getcwd())
-        temp = f"./models/submit.pkl"
+        temp = f"./src/models/submit.pkl"
         with open(temp, "rb") as f:
             self.model = pickle.load(f)
 
