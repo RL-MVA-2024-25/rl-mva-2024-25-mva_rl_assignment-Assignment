@@ -6,3 +6,4 @@ pytest
 xgboost==2.1.3
 zstd
 numba
+tqdm
