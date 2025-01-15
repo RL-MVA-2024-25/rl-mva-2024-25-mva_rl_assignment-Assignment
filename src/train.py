@@ -12,8 +12,6 @@ import numpy as np
 from copy import deepcopy
 import os
 import pickle
-import zstandard as zstd
-import os
 
 env = TimeLimit(
     env=HIVPatient(domain_randomization=True), max_episode_steps=200
@@ -131,24 +129,13 @@ class ProjectAgent:
             pickle.dump(self.model, f)
 
     def load(self, path="./models/Q.pkl"):
-        path = f"./models/Q_submit.pkl.zst"
-        temp = f"./models/Q_submit_temp.pkl"
         print(os.getcwd())
-        try:
-            #I decrompress the file
-            with open(path, "rb") as f_in, open(temp, "wb") as f_out:
-                decompressor = zstd.ZstdDecompressor()
-                f_out.write(decompressor.decompress(f_in.read()))
+        temp = f"./models/submit.pkl"
+        with open(temp, "rb") as f:
+            self.model = pickle.load(f)
 
-            #I load the decompressed model
-            with open(temp, "rb") as f:
-                self.model = pickle.load(f)
+        print("Model loaded successfully.")
 
-            print("Model loaded successfully.")
-
-        except Exception as e:
-            print(f"An error occurred during model loading: {e}")
-            self.model = None
 
 # class ReplayBuffer:
 #     def __init__(self, capacity, device):
